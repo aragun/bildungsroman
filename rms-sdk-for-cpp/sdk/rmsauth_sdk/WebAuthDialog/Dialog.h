@@ -1,17 +1,9 @@
-/*
- * ======================================================================
- * Copyright (c) Microsoft Open Technologies, Inc.  All rights reserved.
- * Licensed under the MIT License.
- * See LICENSE.md in the project root for license information.
- * ======================================================================
-*/
-
 #ifndef DIALOG_H
 #define DIALOG_H
 
 #include <QDialog>
-#include <QtGlobal>
-#include <QLabel>
+#include <QWebEngineProfile>
+#include <QUrl>
 
 #if defined(RMSAUTH_WEB_AUTH_DIALOG_LIBRARY)
 #  define MYSHAREDLIB_EXPORT Q_DECL_EXPORT
@@ -23,39 +15,27 @@ namespace Ui {
 class Dialog;
 }
 
-class QNetworkReply;
-class QNetworkAccessManager;
-
 class MYSHAREDLIB_EXPORT Dialog : public QDialog
 {
     Q_OBJECT
-    static const QString& Tag() {static const QString tag="Dialog"; return tag;}
+
 public:
+    const QString& respondUrl() const {return respondUrl_;}
+
     explicit Dialog(const QString& requestUrl, const QString& redirectUrl, bool useCookie = false, QWidget *parent = 0);
     ~Dialog();
-
-    const QString& respondUrl() const {return respondUrl_;}
-    void clearCookie();
-
-    QNetworkAccessManager *networkAccessManager();
-
-protected:
-    void showEvent(QShowEvent * event) override;
-
-private:
-    Ui::Dialog *ui;
     QString requestUrl_;
     QString redirectUrl_;
     QString respondUrl_;
-    bool useCookie_;
-    QNetworkAccessManager *s_networkAccessManager;
-
-private slots:
-    void slot_webView_loadFinished(bool);
-    void slot_authManager_finished(QNetworkReply *);
 
 private:
-    void processAuthReply(QNetworkReply *reply);
+    Ui::Dialog *ui;
+
+public slots:
+    void processAuthReply(QUrl);
+
+protected:
+    void showEvent(QShowEvent * event) override;
 
 };
 

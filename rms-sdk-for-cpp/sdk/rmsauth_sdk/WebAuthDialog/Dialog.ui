@@ -59,7 +59,7 @@
           <string notr="true"/>
          </property>
          <property name="pixmap">
-          <pixmap resource="res.qrc">:/images/loading.gif</pixmap>
+          <pixmap>:/images/loading.gif</pixmap>
          </property>
          <property name="scaledContents">
           <bool>false</bool>
@@ -100,7 +100,7 @@
     </layout>
    </item>
    <item row="0" column="0" rowspan="2" colspan="2">
-    <widget class="QWebEngineView" name="webView" native="true">
+    <widget class="QWebEngineView" name="webEngineView" native="true">
      <property name="styleSheet">
       <string notr="true">background-color:white;</string>
      </property>
@@ -113,12 +113,10 @@
   <customwidget>
    <class>QWebEngineView</class>
    <extends>QWidget</extends>
-   <header location="global">qwebengineview.h</header>
+   <header>QtWebEngineWidgets/qwebengineview.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
- <resources>
-  <include location="res.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

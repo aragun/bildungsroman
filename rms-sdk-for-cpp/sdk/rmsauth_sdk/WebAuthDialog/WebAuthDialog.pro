@@ -19,11 +19,13 @@ CONFIG(debug, debug|release) {
 SOURCES +=\
     Dialog.cpp \
     Autosaver.cpp \
-    CookieJar.cpp
+    CookieJar.cpp \
+    requestinterceptor.cpp
 
 HEADERS  += Dialog.h \
     Autosaver.h \
-    CookieJar.h
+    CookieJar.h \
+    requestinterceptor.h
 
 FORMS    += Dialog.ui
 
