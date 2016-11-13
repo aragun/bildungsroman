@@ -95,7 +95,7 @@ shared_ptr<string>KeyStoragePosix::LookupKey(const string& csKeyWrapper) {
 }
 
 std::shared_ptr<IKeyStorage>IKeyStorage::Create() {
-  return std::shared_ptr<KeyStoragePosix>(new KeyStoragePosix);
+  return std::shared_ptr<KeyStoragePosix>(new KeyStoragePosix());
 }
 } // namespace keystorage
 } // namespace platform

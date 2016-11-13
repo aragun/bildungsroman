@@ -1,6 +1,7 @@
 #include "dialog.h"
 #include "ui_dialog.h"
 #include "requestinterceptor.h"
+#include <QWebEngineProfile>
 
 Dialog::Dialog(const QString& requestUrl, const QString& redirectUrl, bool useCookie, QWidget *parent)
     : QDialog(parent)
