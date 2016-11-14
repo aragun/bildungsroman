@@ -7,7 +7,9 @@ $result = ""
 $result,$file = Get-Content $logFile
 $result = $result + "`n<testsuites>"
 
-Clear-Content $xmlOutputFile
+if(Test-Path -Path $xmlOutputFile){
+    Clear-Content $xmlOutputFile
+}
 
 foreach($line in $file){
 
@@ -15,10 +17,20 @@ foreach($line in $file){
 
     if(!$line.startsWith("<?xml")){
 
-        $result = $result + "`n"+$line;
+        $result = $result + "`n`t"+$line;
     }
 }
 $result = $result + "`n</testsuites>"
-Write-Host $result
 
+Write-Host $result
 Add-content $xmlOutputFile -value $result
+
+$xml = [xml](Get-Content $xmlOutputFile)
+foreach($testsuite in $xml.testsuites.testsuite){
+    foreach($test in $testsuite.testcase){
+        $test.name = $testsuite.name + "::" + $test.name
+    }
+}
+ Set-Content $xmlOutputFile $xml.OuterXml
+
+
