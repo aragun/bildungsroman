@@ -12,7 +12,7 @@
 #include <string>
 #include <memory>
 #include "IKeyStorage.h"
-#include "sqlite3.h"
+#include "storageaccesswindows.h"
 
 namespace rmscrypto {
 namespace platform {
@@ -26,14 +26,7 @@ public:
                                                  const std::string& csKey) override;
     virtual std::shared_ptr<std::string>LookupKey(const std::string& csKeyWrapper) override;
 
-    sqlite3 * db;
-
-    KeyStorageWindows() {
-        char * error;
-        int rc = sqlite3_open("C:/MSIPC/MyDb.db", &db);
-        const char *sqlCreateTable = "CREATE TABLE MSIPCKeyStorage (csKeyWrapper STRING PRIMARY KEY, csKey STRING);";
-        rc = sqlite3_exec(db, sqlCreateTable, NULL, NULL, &error);
-    }
+    KeyStorageWindows() {}
 };
 
 } // namespace keystorage

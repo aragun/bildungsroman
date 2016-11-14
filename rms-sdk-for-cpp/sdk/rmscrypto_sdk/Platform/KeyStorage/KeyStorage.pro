@@ -25,11 +25,13 @@ unix {
 HEADERS += \
     base64.h \
     IKeyStorage.h \
-    sqlite3.h
+    sqlite3.h \
+    storageaccesswindows.h
 
 SOURCES += \
     base64.cpp \
-    sqlite3.c
+    sqlite3.c \
+    storageaccesswindows.cpp
 
 #include different versions of keystorage
 win32 {
