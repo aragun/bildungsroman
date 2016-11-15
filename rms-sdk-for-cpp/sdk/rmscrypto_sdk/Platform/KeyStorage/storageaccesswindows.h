@@ -3,6 +3,7 @@
 #include "sqlite3.h"
 #include <string>
 #include <memory>
+#include <Windows.h>
 
 class StorageAccessWindows{
 public:
@@ -17,6 +18,7 @@ private:
    StorageAccessWindows& operator=(StorageAccessWindows const&){}  // assignment operator is private
    static StorageAccessWindows* m_pInstance;
    sqlite3 * db;
+   LPWSTR CreateLocalStorage();
 };
 
 #endif // STORAGEACCESSWINDOWS_H
