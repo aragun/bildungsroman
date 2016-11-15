@@ -110,7 +110,8 @@ void StorageAccessWindows::StoreKey(const string& csKeyWrapper,
     }
 }
 
-std::shared_ptr<std::string> StorageAccessWindows::LookupKey(const string& csKeyWrapper) {
+std::shared_ptr<std::string> StorageAccessWindows::LookupKey(const string& csKeyWrapper)
+{
     char * error;
     string sqlLookup = "SELECT csKey FROM MSIPCKeyStorage WHERE csKeyWrapper ='" + csKeyWrapper + "';";
     char **results = NULL;
@@ -124,7 +125,8 @@ std::shared_ptr<std::string> StorageAccessWindows::LookupKey(const string& csKey
     return rows >=1 && columns >= 1 ? shared_ptr<string>(new string(results[1])) : nullptr;
 }
 
-void StorageAccessWindows::RemoveKey(const string& csKeyWrapper) {
+void StorageAccessWindows::RemoveKey(const string& csKeyWrapper)
+{
     char * error;
     string sqlDelete = "DELETE FROM MSIPCKeyStorage WHERE csKeyWrapper = '" + csKeyWrapper +"';";
     int rc = sqlite3_exec(db, sqlDelete.c_str(), NULL, NULL, &error);
