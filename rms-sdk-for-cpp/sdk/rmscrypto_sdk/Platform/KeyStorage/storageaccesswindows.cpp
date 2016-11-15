@@ -1,9 +1,9 @@
 #include "storageaccesswindows.h"
 #include <strsafe.h>
-#include "../Logger/Logger.h"
+#include "../../CryptoAPI/RMSCryptoExceptions.h"
 
 using namespace std;
-using namespace rmscrypto::platform::logger;
+using namespace rmscrypto::exceptions;
 
 // Global static pointer used to ensure a single instance of the class.
 StorageAccessWindows* StorageAccessWindows::m_pInstance = NULL;
@@ -58,12 +58,12 @@ StorageAccessWindows::StorageAccessWindows()
 
     char * error;
     int rc = sqlite3_open16(dbName, &db);
-    const char *sqlCreateTable = "CREATE TABLE MSIPCKeyStorage (csKeyWrapper STRING PRIMARY KEY, csKey STRING);";
+    const char *sqlCreateTable = "CREATE TABLE IF NOT EXISTS MSIPCKeyStorage (csKeyWrapper STRING PRIMARY KEY, csKey STRING);";
     rc = sqlite3_exec(db, sqlCreateTable, NULL, NULL, &error);
     if (rc)
     {
-        Logger::Error("Error in CREATE TABLE: %s", sqlite3_errmsg(db));
         sqlite3_free(error);
+        throw RMSCryptoIOKeyException(sqlite3_errmsg(db));
     }
 }
 
@@ -84,14 +84,14 @@ LPWSTR StorageAccessWindows::CreateLocalStorage()
         DWORD lastError = GetLastError();
         if (lastError != ERROR_ALREADY_EXISTS)
         {
-            Logger::Error("Failed to create directory : %s", GetLastErrorAsString().c_str());
+            throw RMSCryptoIOKeyException(GetLastErrorAsString().c_str());
         }
     }
     else
     {
         if (!EncryptFile(directory))
         {
-            Logger::Error("Failed to encrypt directory : %s", GetLastErrorAsString().c_str());
+            throw RMSCryptoIOKeyException(GetLastErrorAsString().c_str());
         }
     }
     return directory;
@@ -105,8 +105,8 @@ void StorageAccessWindows::StoreKey(const string& csKeyWrapper,
     int rc = sqlite3_exec(db, sqlInsert.c_str(), NULL, NULL, &error);
     if (rc)
     {
-        Logger::Error("Error in INSERT: %s", sqlite3_errmsg(db));
         sqlite3_free(error);
+        throw RMSCryptoIOKeyException(sqlite3_errmsg(db));
     }
 }
 
@@ -118,8 +118,8 @@ std::shared_ptr<std::string> StorageAccessWindows::LookupKey(const string& csKey
     int rc = sqlite3_get_table(db, sqlLookup.c_str(), &results, &rows, &columns, &error);
     if (rc)
     {
-        Logger::Error("Error in SELECT: %s", sqlite3_errmsg(db));
         sqlite3_free(error);
+        throw RMSCryptoIOKeyException(sqlite3_errmsg(db));
     }
     return rows >=1 && columns >= 1 ? shared_ptr<string>(new string(results[1])) : nullptr;
 }
@@ -130,7 +130,7 @@ void StorageAccessWindows::RemoveKey(const string& csKeyWrapper) {
     int rc = sqlite3_exec(db, sqlDelete.c_str(), NULL, NULL, &error);
     if (rc)
     {
-        Logger::Error("Error in DELETE: %s", sqlite3_errmsg(db));
         sqlite3_free(error);
+        throw RMSCryptoIOKeyException(sqlite3_errmsg(db));
     }
 }
