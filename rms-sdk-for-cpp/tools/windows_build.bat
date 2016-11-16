@@ -12,5 +12,5 @@ cd ..\bin
 copy tests\*UnitTest* .
 xcopy C:\Qt\5.7\msvc2013\bin\*.dll .
 rmscryptoUnitTestsd.exe -xunitxml > tests\rmsUnitTestResults.txt
-rmsauthUnitTestsd.exe -xunitxml >> tests\rmsUnitTestResults.txt
+::rmsauthUnitTestsd.exe -xunitxml >> tests\rmsUnitTestResults.txt
 rmsplatformUnitTestsd.exe -xunitxml >> tests\rmsUnitTestResults.txt
