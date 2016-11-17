@@ -21,7 +21,7 @@ StorageAccessWindows* StorageAccessWindows::Instance()
    return m_pInstance;
 }
 
-LPWSTR concatWStrings(LPWSTR stringA, LPWSTR stringB)
+LPWSTR concatWStrings(LPCWSTR stringA, LPCWSTR stringB)
 {
     DWORD lengthA = wcslen(stringA);
     DWORD lengthB = wcslen(stringB);
@@ -53,8 +53,8 @@ std::string GetLastErrorAsString()
 
 StorageAccessWindows::StorageAccessWindows()
 {
-    LPWSTR directory = CreateLocalStorage();
-    LPWSTR dbName = concatWStrings(directory, L"\\MSIPCKeyStorage.db");
+    LPCWSTR directory = CreateLocalStorage();
+    LPCWSTR dbName = concatWStrings(directory, L"\\MSIPCKeyStorage.db");
 
     char * error;
     int rc = sqlite3_open16(dbName, &db);
@@ -73,8 +73,8 @@ LPWSTR StorageAccessWindows::CreateLocalStorage()
     //Check if db folder exists
     //If not, create and encrypt
 
-    LPWSTR lpName = L"localappdata";
-    LPWSTR aipDir = L"\\Microsoft\\AIP";
+    LPCWSTR lpName = L"localappdata";
+    LPCWSTR aipDir = L"\\Microsoft\\AIP";
     DWORD nSize = 500;
     LPWSTR lpBuffer = new WCHAR[nSize];
     GetEnvironmentVariableW(lpName, lpBuffer, nSize);
