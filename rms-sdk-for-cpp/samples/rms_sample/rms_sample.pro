@@ -8,6 +8,8 @@ QT      += core gui xml xmlpatterns widgets webenginewidgets network
 CONFIG  += c++11 debug_and_release
 CONFIG  -= app_bundle
 
+DEFINES += Q_COMPILER_INITIALIZER_LISTS
+
 INCLUDEPATH += $$REPO_ROOT/sdk/rmsauth_sdk/rmsauth
 INCLUDEPATH += $$REPO_ROOT/sdk/rms_sdk/ModernAPI
 INCLUDEPATH += $$REPO_ROOT/sdk/rms_sdk/
