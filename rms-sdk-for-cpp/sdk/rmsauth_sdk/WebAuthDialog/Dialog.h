@@ -2,7 +2,6 @@
 #define DIALOG_H
 
 #include <QDialog>
-#include <QWebEngineProfile>
 #include <QUrl>
 
 #if defined(RMSAUTH_WEB_AUTH_DIALOG_LIBRARY)

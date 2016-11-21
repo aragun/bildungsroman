@@ -12,6 +12,7 @@
 #include <string>
 #include <memory>
 #include "IKeyStorage.h"
+#include "storageaccesswindows.h"
 
 namespace rmscrypto {
 namespace platform {
