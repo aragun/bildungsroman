@@ -24,19 +24,15 @@ unix {
 
 HEADERS += \
     base64.h \
-    IKeyStorage.h \
-    sqlite3.h \
-    StorageAccessWindows.h
+    IKeyStorage.h
 
 SOURCES += \
-    base64.cpp \
-    sqlite3.c \
-    StorageAccessWindows.cpp
+    base64.cpp
 
 #include different versions of keystorage
 win32 {
-    HEADERS += KeyStorageWindows.h
-    SOURCES += KeyStorageWindows.cpp
+    HEADERS += KeyStorageWindows.h sqlite3.h StorageAccessWindows.h
+    SOURCES += KeyStorageWindows.cpp sqlite3.c StorageAccessWindows.cpp
 } unix:!mac {
     CONFIG += link_pkgconfig
     PKGCONFIG += glib-2.0
