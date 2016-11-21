@@ -19,16 +19,16 @@ class MYSHAREDLIB_EXPORT Dialog : public QDialog
     Q_OBJECT
 
 public:
-    const QString& respondUrl() const {return respondUrl_;}
+    const QString& respondUrl() const {return mRespondUrl;}
 
     explicit Dialog(const QString& requestUrl, const QString& redirectUrl, bool useCookie = false, QWidget *parent = 0);
     ~Dialog();
-    QString requestUrl_;
-    QString redirectUrl_;
-    QString respondUrl_;
+    QString mRequestUrl;
+    QString mRedirectUrl;
+    QString mRespondUrl;
 
 private:
-    Ui::Dialog *ui;
+    Ui::Dialog * mUi;
 
 public slots:
     void processAuthReply(QUrl);

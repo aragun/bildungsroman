@@ -1,12 +1,11 @@
-#include "storageaccesswindows.h"
+#include "StorageAccessWindows.h"
 #include <strsafe.h>
 #include "../../CryptoAPI/RMSCryptoExceptions.h"
 
-using namespace std;
 using namespace rmscrypto::exceptions;
 
 // Global static pointer used to ensure a single instance of the class.
-StorageAccessWindows* StorageAccessWindows::m_pInstance = NULL;
+StorageAccessWindows* StorageAccessWindows::mInstance = NULL;
 
 /** This function is called to create an instance of the class.
     Calling the constructor publicly is not allowed. The constructor
@@ -15,13 +14,13 @@ StorageAccessWindows* StorageAccessWindows::m_pInstance = NULL;
 
 StorageAccessWindows* StorageAccessWindows::Instance()
 {
-   if (!m_pInstance)   // Only allow one instance of class to be generated.
-      m_pInstance = new StorageAccessWindows;
+   if (!mInstance)   // Only allow one instance of class to be generated.
+      mInstance = new StorageAccessWindows;
 
-   return m_pInstance;
+   return mInstance;
 }
 
-LPWSTR concatWStrings(LPCWSTR stringA, LPCWSTR stringB)
+LPWSTR ConcatWStrings(LPCWSTR stringA, LPCWSTR stringB)
 {
     DWORD lengthA = wcslen(stringA);
     DWORD lengthB = wcslen(stringB);
@@ -54,16 +53,17 @@ std::string GetLastErrorAsString()
 StorageAccessWindows::StorageAccessWindows()
 {
     LPCWSTR directory = CreateLocalStorage();
-    LPCWSTR dbName = concatWStrings(directory, L"\\MSIPCKeyStorage.db");
+    LPCWSTR dbName = ConcatWStrings(directory, L"\\MSIPCKeyStorage.db");
 
     char * error;
-    int rc = sqlite3_open16(dbName, &db);
+    int rc = sqlite3_open16(dbName, &mDb);
     const char *sqlCreateTable = "CREATE TABLE IF NOT EXISTS MSIPCKeyStorage (csKeyWrapper STRING PRIMARY KEY, csKey STRING);";
-    rc = sqlite3_exec(db, sqlCreateTable, NULL, NULL, &error);
+    rc = sqlite3_exec(mDb, sqlCreateTable, NULL, NULL, &error);
     if (rc)
     {
+        // error can be used for telemetry
         sqlite3_free(error);
-        throw RMSCryptoIOKeyException(sqlite3_errmsg(db));
+        throw RMSCryptoIOKeyException(sqlite3_errmsg(mDb));
     }
 }
 
@@ -78,7 +78,7 @@ LPWSTR StorageAccessWindows::CreateLocalStorage()
     DWORD nSize = 500;
     LPWSTR lpBuffer = new WCHAR[nSize];
     GetEnvironmentVariableW(lpName, lpBuffer, nSize);
-    LPWSTR directory = concatWStrings(lpBuffer, aipDir);
+    LPWSTR directory = ConcatWStrings(lpBuffer, aipDir);
     if (!CreateDirectory(directory, NULL))
     {
         DWORD lastError = GetLastError();
@@ -97,42 +97,45 @@ LPWSTR StorageAccessWindows::CreateLocalStorage()
     return directory;
 }
 
-void StorageAccessWindows::StoreKey(const string& csKeyWrapper,
-                                    const string& csKey)
+void StorageAccessWindows::StoreKey(const std::string& csKeyWrapper,
+                                    const std::string& csKey)
 {
     char * error;
-    string sqlInsert = "INSERT INTO MSIPCKeyStorage VALUES('"+csKeyWrapper +"','"+csKey+"');";
-    int rc = sqlite3_exec(db, sqlInsert.c_str(), NULL, NULL, &error);
+    std::string sqlInsert = "INSERT INTO MSIPCKeyStorage VALUES('"+csKeyWrapper +"','"+csKey+"');";
+    int rc = sqlite3_exec(mDb, sqlInsert.c_str(), NULL, NULL, &error);
     if (rc)
     {
+        // error can be used for telemetry
         sqlite3_free(error);
-        throw RMSCryptoIOKeyException(sqlite3_errmsg(db));
+        throw RMSCryptoIOKeyException(sqlite3_errmsg(mDb));
     }
 }
 
-std::shared_ptr<std::string> StorageAccessWindows::LookupKey(const string& csKeyWrapper)
+std::shared_ptr<std::string> StorageAccessWindows::LookupKey(const std::string& csKeyWrapper)
 {
     char * error;
-    string sqlLookup = "SELECT csKey FROM MSIPCKeyStorage WHERE csKeyWrapper ='" + csKeyWrapper + "';";
+    std::string sqlLookup = "SELECT csKey FROM MSIPCKeyStorage WHERE csKeyWrapper ='" + csKeyWrapper + "';";
     char **results = NULL;
     int rows, columns;
-    int rc = sqlite3_get_table(db, sqlLookup.c_str(), &results, &rows, &columns, &error);
+    int rc = sqlite3_get_table(mDb, sqlLookup.c_str(), &results, &rows, &columns, &error);
     if (rc)
     {
+        // error can be used for telemetry
         sqlite3_free(error);
-        throw RMSCryptoIOKeyException(sqlite3_errmsg(db));
+        throw RMSCryptoIOKeyException(sqlite3_errmsg(mDb));
     }
-    return rows >=1 && columns >= 1 ? shared_ptr<string>(new string(results[1])) : nullptr;
+    return rows >=1 && columns >= 1 ? std::shared_ptr<std::string>(new std::string(results[1])) : nullptr;
 }
 
-void StorageAccessWindows::RemoveKey(const string& csKeyWrapper)
+void StorageAccessWindows::RemoveKey(const std::string& csKeyWrapper)
 {
     char * error;
-    string sqlDelete = "DELETE FROM MSIPCKeyStorage WHERE csKeyWrapper = '" + csKeyWrapper +"';";
-    int rc = sqlite3_exec(db, sqlDelete.c_str(), NULL, NULL, &error);
+    std::string sqlDelete = "DELETE FROM MSIPCKeyStorage WHERE csKeyWrapper = '" + csKeyWrapper +"';";
+    int rc = sqlite3_exec(mDb, sqlDelete.c_str(), NULL, NULL, &error);
     if (rc)
     {
+        // error can be used for telemetry
         sqlite3_free(error);
-        throw RMSCryptoIOKeyException(sqlite3_errmsg(db));
+        throw RMSCryptoIOKeyException(sqlite3_errmsg(mDb));
     }
 }
