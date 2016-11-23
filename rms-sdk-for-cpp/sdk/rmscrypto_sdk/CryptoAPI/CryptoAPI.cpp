@@ -111,11 +111,11 @@ std::shared_ptr<std::vector<uint8_t> >DecryptWithAutoKey(
   std::shared_ptr<std::vector<uint8_t> >cbIn,
   CipherMode                            cipherMode,
   const std::string                   & csKeyName /*= "default"*/) {
-
-  //create QTStream
+    //create QTStream
     QByteArray backingByteArray;
     auto backingQDataStream = new QSharedPointer<QDataStream>(
                 new  QDataStream(&backingByteArray,QIODevice::ReadWrite));
+
     auto backingStream = QTStreamImpl::Create(*backingQDataStream);
 
     backingStream->Write(cbIn->data(),cbIn->size());

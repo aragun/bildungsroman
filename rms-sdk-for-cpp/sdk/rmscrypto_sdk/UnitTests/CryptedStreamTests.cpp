@@ -31,7 +31,6 @@ void CryptedStreamTests::CryptedStreamToMemory() {
     QByteArray backingByteArray;
     auto backingQDataStream = new QSharedPointer<QDataStream>(
                 new  QDataStream(&backingByteArray,QIODevice::ReadWrite));
-    auto backingStream = QTStreamImpl::Create(*backingQDataStream);
 
   vector<uint8_t> key(16);
 
@@ -51,6 +50,8 @@ void CryptedStreamTests::CryptedStreamToMemory() {
 
     memcpy(key.data(), qKey.data(), key.size());
 
+    auto backingStream = QTStreamImpl::Create(*backingQDataStream);
+
     auto cryptoStream = rmscrypto::api::CreateCryptoStream(
       algo, key, backingStream);
 
@@ -58,7 +59,6 @@ void CryptedStreamTests::CryptedStreamToMemory() {
                         qData.size());
     cryptoStream->Flush();
 
-    //auto res = backingBuffer->str();
     auto res = backingByteArray;
     QVERIFY2(
       static_cast<int>(

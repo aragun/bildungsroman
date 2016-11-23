@@ -89,6 +89,7 @@ int main(int argc, char *argv[])
     QTest::qExec(new NonInteractiveTests(clientIdStr, resourceStr, authorityStr,
                                          userNameStr, userPasswordStr,
                                          clientSecretStr));
+
   return res;
 }
 
