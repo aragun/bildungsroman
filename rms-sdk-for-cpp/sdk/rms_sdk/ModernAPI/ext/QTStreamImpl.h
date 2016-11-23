@@ -13,7 +13,7 @@
 #include "../ModernAPIExport.h"
 #include <QSharedPointer>
 #include <QDataStream>
-#include "../../rmscrypto_sdk/CryptoAPI/CryptoAPI.h"
+#include <CryptoAPI.h>
 
 class DLL_PUBLIC_RMS QTStreamImpl :
   public rmscrypto::api::IStream,

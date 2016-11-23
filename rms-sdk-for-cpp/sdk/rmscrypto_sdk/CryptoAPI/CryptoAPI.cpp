@@ -92,20 +92,19 @@ std::shared_ptr<std::vector<uint8_t> >EncryptWithAutoKey(
   CipherMode                            cipherMode,
   const std::string                   & csKeyName /*= "default"*/) {
   //create QTStream
-    QByteArray arr;
-
-    QDataStream data(&arr,QIODevice::ReadWrite);
-    auto sOut = new QSharedPointer<QDataStream>(&data);
-    auto qstream = QTStreamImpl::Create(*sOut);
+    QByteArray backingByteArray;
+    auto backingQDataStream = new QSharedPointer<QDataStream>(
+                new  QDataStream(&backingByteArray,QIODevice::ReadWrite));
+    auto backingStream = QTStreamImpl::Create(*backingQDataStream);
 
   auto cryptoStream = CreateCryptoStreamWithAutoKey(cipherMode,
                                                     csKeyName,
-                                                    qstream);
+                                                    backingStream);
 
   // encrypt
   cryptoStream->Write(pbIn->data(), pbIn->size());
   cryptoStream->Flush();
-  return make_shared<vector<uint8_t> >(arr.begin(), arr.end());
+  return make_shared<vector<uint8_t> >(backingByteArray.begin(), backingByteArray.end());
 }
 
 std::shared_ptr<std::vector<uint8_t> >DecryptWithAutoKey(
@@ -114,17 +113,17 @@ std::shared_ptr<std::vector<uint8_t> >DecryptWithAutoKey(
   const std::string                   & csKeyName /*= "default"*/) {
 
   //create QTStream
-    QByteArray arr;
-    QDataStream data(&arr,QIODevice::ReadWrite);
-    auto sOut = new QSharedPointer<QDataStream>(&data);
-    auto qstream = QTStreamImpl::Create(*sOut);
+    QByteArray backingByteArray;
+    auto backingQDataStream = new QSharedPointer<QDataStream>(
+                new  QDataStream(&backingByteArray,QIODevice::ReadWrite));
+    auto backingStream = QTStreamImpl::Create(*backingQDataStream);
 
-    qstream->Write(cbIn->data(),cbIn->size());
-    qstream->Flush();
+    backingStream->Write(cbIn->data(),cbIn->size());
+    backingStream->Flush();
 
     auto cryptoStream = CreateCryptoStreamWithAutoKey(cipherMode,
                                                         csKeyName,
-                                                        qstream);
+                                                        backingStream);
 
   // encrypt
   auto resVec = cryptoStream->Read(cbIn->size());
