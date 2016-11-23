@@ -28,10 +28,10 @@ void CryptedStreamTests::CryptedStreamToMemory_data() {
 
 void CryptedStreamTests::CryptedStreamToMemory() {
     //create QTStream
-      QByteArray arr;
-      QDataStream data(&arr,QIODevice::ReadWrite);
-      auto sOut = new QSharedPointer<QDataStream>(&data);
-      auto qstream = QTStreamImpl::Create(*sOut);
+    QByteArray backingByteArray;
+    auto backingQDataStream = new QSharedPointer<QDataStream>(
+                new  QDataStream(&backingByteArray,QIODevice::ReadWrite));
+    auto backingStream = QTStreamImpl::Create(*backingQDataStream);
 
   vector<uint8_t> key(16);
 
@@ -52,14 +52,14 @@ void CryptedStreamTests::CryptedStreamToMemory() {
     memcpy(key.data(), qKey.data(), key.size());
 
     auto cryptoStream = rmscrypto::api::CreateCryptoStream(
-      algo, key, qstream);
+      algo, key, backingStream);
 
     cryptoStream->Write(reinterpret_cast<const uint8_t *>(qData.data()),
                         qData.size());
     cryptoStream->Flush();
 
     //auto res = backingBuffer->str();
-    auto res = arr;
+    auto res = backingByteArray;
     QVERIFY2(
       static_cast<int>(
         res.length()) == qEncryptedData.size(), "Invalid encrypted size!");
