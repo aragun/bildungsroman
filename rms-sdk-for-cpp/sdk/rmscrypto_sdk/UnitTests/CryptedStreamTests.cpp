@@ -10,6 +10,7 @@
 #include "CryptedStreamTests.h"
 #include "../CryptoAPI/CryptoAPI.h"
 #include "../CryptoAPI/RMSCryptoExceptions.h"
+#include "../../rms_sdk/ModernAPI/ext/QTStreamImpl.h"
 
 using namespace std;
 void CryptedStreamTests::CryptedStreamToMemory_data() {
@@ -26,8 +27,12 @@ void CryptedStreamTests::CryptedStreamToMemory_data() {
 }
 
 void CryptedStreamTests::CryptedStreamToMemory() {
-  shared_ptr<stringstream> backingBuffer = make_shared<stringstream>(
-    ios::in | ios::out | ios::binary);
+    //create QTStream
+      QByteArray arr;
+      QDataStream data(&arr,QIODevice::ReadWrite);
+      auto sOut = new QSharedPointer<QDataStream>(&data);
+      auto qstream = QTStreamImpl::Create(*sOut);
+
   vector<uint8_t> key(16);
 
   QFETCH(QString, aesKey);
@@ -46,18 +51,15 @@ void CryptedStreamTests::CryptedStreamToMemory() {
 
     memcpy(key.data(), qKey.data(), key.size());
 
-    auto backingStream =
-      rmscrypto::api::CreateStreamFromStdStream(static_pointer_cast<iostream>(
-                                                  backingBuffer));
-
     auto cryptoStream = rmscrypto::api::CreateCryptoStream(
-      algo, key, backingStream);
+      algo, key, qstream);
 
     cryptoStream->Write(reinterpret_cast<const uint8_t *>(qData.data()),
                         qData.size());
     cryptoStream->Flush();
 
-    auto res = backingBuffer->str();
+    //auto res = backingBuffer->str();
+    auto res = arr;
     QVERIFY2(
       static_cast<int>(
         res.length()) == qEncryptedData.size(), "Invalid encrypted size!");
