@@ -230,6 +230,9 @@ uint64_t StdStreamAdapter::Size() {
     m_oBackingStream->seekp(0, ios_base::end);
     ret =  static_cast<int>(m_oBackingStream->tellp());
     m_oBackingStream->seekp(oldPos);
+    if(ret == -1){
+        ret = 0;
+    }
   }
   return static_cast<uint64_t>(ret);
 }

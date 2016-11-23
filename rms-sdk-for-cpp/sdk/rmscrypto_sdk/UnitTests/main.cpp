@@ -20,6 +20,10 @@ int main(int argc, char *argv[])
     res += QTest::qExec(new CryptoAPITests(), argc, argv);
     res += QTest::qExec(new KeyStorageTests(), argc, argv);
     res += QTest::qExec(new CryptedStreamTests(), argc, argv);
+<<<<<<< Updated upstream
 
+=======
+//    res += QTest::qExec(new qtstreamtest(), argc, argv);
+>>>>>>> Stashed changes
     return res;
 }

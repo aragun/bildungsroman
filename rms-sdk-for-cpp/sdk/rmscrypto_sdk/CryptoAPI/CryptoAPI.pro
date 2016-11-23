@@ -13,13 +13,13 @@ DEFINES += RMS_CRYPTO_LIBRARY
 win32:INCLUDEPATH += $$REPO_ROOT/third_party/include
 unix:!mac:INCLUDEPATH += /usr/include/glib-2.0/ /usr/include/libsecret-1/ /usr/lib/x86_64-linux-gnu/glib-2.0/include/
 
-LIBS    += -L$$REPO_ROOT/bin/crypto -L$$REPO_ROOT/bin/crypto/platform
+LIBS    += -L$$REPO_ROOT/bin/crypto -L$$REPO_ROOT/bin/crypto/platform -L$$REPO_ROOT/bin
 
 CONFIG(debug, debug|release) {
     TARGET = $$join(TARGET,,,d)
-    LIBS +=  -lmodcryptod -lplatformkeystoraged -lplatformcryptod -lplatformloggerd -lplatformsettingsd
-} else {
-    LIBS +=  -lmodcrypto -lplatformkeystorage -lplatformcrypto -lplatformlogger -lplatformsettings
+    LIBS +=  -lmodcryptod -lplatformkeystoraged -lplatformcryptod -lplatformloggerd -lplatformsettingsd -lrmsd
+} else{
+    LIBS +=  -lmodcrypto -lplatformkeystorage -lplatformcrypto -lplatformlogger -lplatformsettings -lrms
 }
 
 win32:LIBS += -L$$REPO_ROOT/third_party/lib/eay/ -lssleay32MDd -llibeay32MDd -lGdi32 -lUser32 -lAdvapi32
