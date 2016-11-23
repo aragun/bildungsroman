@@ -1,4 +1,4 @@
-#include "requestinterceptor.h"
+#include "RequestInterceptor.h"
 
 void RequestInterceptor::interceptRequest(QWebEngineUrlRequestInfo & info)
 {

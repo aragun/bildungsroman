@@ -10,7 +10,6 @@
 #include "KeyStorageTests.h"
 #include "CryptedStreamTests.h"
 #include "CryptoAPITests.h"
-#include "qtstreamtest.h"
 
 int main(int argc, char *argv[])
 {
@@ -18,9 +17,9 @@ int main(int argc, char *argv[])
 
     int res = 0;
 
-//    res += QTest::qExec(new CryptoAPITests(), argc, argv);
-//    res += QTest::qExec(new KeyStorageTests(), argc, argv);
-//    res += QTest::qExec(new CryptedStreamTests(), argc, argv);
-    res += QTest::qExec(new qtstreamtest(), argc, argv);
+    res += QTest::qExec(new CryptoAPITests(), argc, argv);
+    res += QTest::qExec(new KeyStorageTests(), argc, argv);
+    res += QTest::qExec(new CryptedStreamTests(), argc, argv);
+
     return res;
 }

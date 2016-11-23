@@ -9,10 +9,10 @@
 #ifndef _CRYPTO_STREAMS_LIB_KEYSTORAGE_H
 #define _CRYPTO_STREAMS_LIB_KEYSTORAGE_H
 
+#include "StorageAccessWindows.h"
 #include <string>
 #include <memory>
 #include "IKeyStorage.h"
-#include "storageaccesswindows.h"
 
 namespace rmscrypto {
 namespace platform {

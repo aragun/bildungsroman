@@ -34,13 +34,11 @@ SOURCES += \
     PlatformCryptoTest.cpp \
     KeyStorageTests.cpp \
     CryptedStreamTests.cpp \
-    CryptoAPITests.cpp \
-    qtstreamtest.cpp
+    CryptoAPITests.cpp
 
 HEADERS += \
     KeyStorageTests.h \
     PlatformCryptoTest.h \
     CryptedStreamTests.h \
     TestHelpers.h \
-    CryptoAPITests.h \
-    qtstreamtest.h
+    CryptoAPITests.h
