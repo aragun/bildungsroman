@@ -10,8 +10,7 @@
 #include "CryptedStreamTests.h"
 #include "../CryptoAPI/CryptoAPI.h"
 #include "../CryptoAPI/RMSCryptoExceptions.h"
-#include "../../rms_sdk/ModernAPI/ext/QTStreamImpl.h"
-
+#include "../Platform/QTStreamImpl/QTStreamImpl.h"
 using namespace std;
 void CryptedStreamTests::CryptedStreamToMemory_data() {
   QTest::addColumn<QString>("aesKey");

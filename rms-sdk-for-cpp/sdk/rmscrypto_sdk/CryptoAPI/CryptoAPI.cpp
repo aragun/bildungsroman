@@ -26,7 +26,7 @@
 #include "StdStreamAdapter.h"
 #include "RMSCryptoExceptions.h"
 
-#include "../../rms_sdk/ModernAPI/ext/QTStreamImpl.h"
+#include "../Platform/QTStreamImpl/QTStreamImpl.h"
 
 using namespace std;
 using namespace rmscrypto::crypto;
