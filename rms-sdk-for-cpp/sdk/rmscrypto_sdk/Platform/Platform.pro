@@ -6,5 +6,4 @@ SUBDIRS += \
     Crypto \
     KeyStorage \
     Logger \
-    Settings \
-    QTStreamImpl
+    Settings
