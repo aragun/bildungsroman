@@ -18,7 +18,7 @@ LIBS    += -L$$REPO_ROOT/bin/crypto -L$$REPO_ROOT/bin/crypto/platform
 CONFIG(debug, debug|release) {
     TARGET = $$join(TARGET,,,d)
     LIBS +=  -lmodcryptod -lplatformkeystoraged -lplatformcryptod -lplatformloggerd -lplatformsettingsd
-} else{
+} else {
     LIBS +=  -lmodcrypto -lplatformkeystorage -lplatformcrypto -lplatformlogger -lplatformsettings
 }
 

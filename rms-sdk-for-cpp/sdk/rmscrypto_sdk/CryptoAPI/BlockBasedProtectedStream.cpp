@@ -9,7 +9,6 @@
 #include <limits>
 #include "BlockBasedProtectedStream.h"
 #include "RMSCryptoExceptions.h"
-
 using namespace std;
 namespace rmscrypto {
 namespace api {

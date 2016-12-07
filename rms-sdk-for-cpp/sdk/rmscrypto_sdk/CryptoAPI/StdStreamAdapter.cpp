@@ -126,7 +126,6 @@ int64_t StdStreamAdapter::ReadInternal(uint8_t *pbBuffer,
                                        int64_t  cbBuffer) {
     auto fail = m_iBackingStream->fail();
     //This fail only happens in Windows
-    //TODO: figure out when fail is acceptable and when it is not
     if(fail){
         m_iBackingStream->clear();
     }
@@ -160,11 +159,10 @@ int64_t StdStreamAdapter::WriteInternal(const uint8_t *cpbBuffer,
 
   auto fail = m_oBackingStream->fail();
   //This fail only happens in Windows
-  //TODO: figure out when fail is acceptable and when it is not
   if(fail){
       m_oBackingStream->clear();
   }
-  &m_oBackingStream->write(reinterpret_cast<const char *>(cpbBuffer), cbBuffer);
+  m_oBackingStream->write(reinterpret_cast<const char *>(cpbBuffer), cbBuffer);
   return cbBuffer;
 }
 
@@ -225,6 +223,7 @@ uint64_t StdStreamAdapter::Position() {
 
 uint64_t StdStreamAdapter::Size() {
   int ret = 0;
+
   lock_guard<mutex> locker(*m_locker);
 
   if (m_iBackingStream.get() != nullptr) {

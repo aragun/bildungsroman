@@ -15,7 +15,6 @@ unix:!mac:INCLUDEPATH += /usr/include/glib-2.0/ /usr/include/libsecret-1/ /usr/l
 # mac:INCLUDEPATH     +=
 
 DEFINES += SRCDIR=\\\"$$PWD/\\\"
-DEFINES += QTFRAMEWORK
 
 LIBS                  +=  -L$$REPO_ROOT/bin -L$$REPO_ROOT/bin/crypto -L$$REPO_ROOT/bin/crypto/platform
 
