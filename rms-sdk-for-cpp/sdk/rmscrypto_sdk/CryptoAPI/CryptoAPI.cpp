@@ -26,8 +26,6 @@
 #include "StdStreamAdapter.h"
 #include "RMSCryptoExceptions.h"
 
-#include "QTStreamImpl.h"
-
 using namespace std;
 using namespace rmscrypto::crypto;
 namespace rmscrypto {
@@ -91,35 +89,41 @@ std::shared_ptr<std::vector<uint8_t> >EncryptWithAutoKey(
   std::shared_ptr<std::vector<uint8_t> >pbIn,
   CipherMode                            cipherMode,
   const std::string                   & csKeyName /*= "default"*/) {
-  //create QTStream
-    QByteArray backingByteArray;
-    auto backingQDataStream = new QSharedPointer<QDataStream>(
-                new  QDataStream(&backingByteArray,QIODevice::ReadWrite));
-    auto backingStream = QTStreamImpl::Create(*backingQDataStream);
+    // create backing stream
+    auto backingStdStream = make_shared<stringstream>(
+      ios::in | ios::out | ios::binary);
 
-  auto cryptoStream = CreateCryptoStreamWithAutoKey(cipherMode,
-                                                    csKeyName,
-                                                    backingStream);
+    auto backingStream =
+      CreateStreamFromStdStream(static_pointer_cast<iostream>(backingStdStream));
 
-  // encrypt
-  cryptoStream->Write(pbIn->data(), pbIn->size());
-  cryptoStream->Flush();
-  return make_shared<vector<uint8_t> >(backingByteArray.begin(), backingByteArray.end());
+    auto cryptoStream = CreateCryptoStreamWithAutoKey(cipherMode,
+                                                      csKeyName,
+                                                      backingStream);
+
+    // encrypt
+    cryptoStream->Write(pbIn->data(), pbIn->size());
+    cryptoStream->Flush();
+
+    // return result
+    auto resStr = backingStdStream->str();
+    return make_shared<vector<uint8_t> >(resStr.begin(), resStr.end());
 }
 
 std::shared_ptr<std::vector<uint8_t> >DecryptWithAutoKey(
   std::shared_ptr<std::vector<uint8_t> >cbIn,
   CipherMode                            cipherMode,
   const std::string                   & csKeyName /*= "default"*/) {
-    //create QTStream
-    QByteArray backingByteArray;
-    auto backingQDataStream = new QSharedPointer<QDataStream>(
-                new  QDataStream(&backingByteArray,QIODevice::ReadWrite));
+    // create backing stream
+    auto backingStdStream = make_shared<stringstream>(
+      ios::in | ios::out | ios::binary);
 
-    auto backingStream = QTStreamImpl::Create(*backingQDataStream);
+    backingStdStream->write(reinterpret_cast<const char *>(cbIn->data()),
+                            cbIn->size());
 
-    backingStream->Write(cbIn->data(),cbIn->size());
-    backingStream->Flush();
+    backingStdStream->flush();
+
+    auto backingStream =
+      CreateStreamFromStdStream(static_pointer_cast<iostream>(backingStdStream));
 
     auto cryptoStream = CreateCryptoStreamWithAutoKey(cipherMode,
                                                         csKeyName,

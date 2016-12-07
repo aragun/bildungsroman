@@ -124,6 +124,12 @@ int64_t StdStreamAdapter::Read(uint8_t *pbBuffer,
 
 int64_t StdStreamAdapter::ReadInternal(uint8_t *pbBuffer,
                                        int64_t  cbBuffer) {
+    auto fail = m_iBackingStream->fail();
+    //This fail only happens in Windows
+    //TODO: figure out when fail is acceptable and when it is not
+    if(fail){
+        m_iBackingStream->clear();
+    }
   m_iBackingStream->read(reinterpret_cast<char *>(pbBuffer), cbBuffer);
   return m_iBackingStream->gcount();
 }
@@ -152,8 +158,13 @@ int64_t StdStreamAdapter::WriteInternal(const uint8_t *cpbBuffer,
                                         int64_t        cbBuffer) {
   assert(cpbBuffer != nullptr || cbBuffer == 0);
 
-  m_oBackingStream->write(reinterpret_cast<const char *>(cpbBuffer), cbBuffer);
-
+  auto fail = m_oBackingStream->fail();
+  //This fail only happens in Windows
+  //TODO: figure out when fail is acceptable and when it is not
+  if(fail){
+      m_oBackingStream->clear();
+  }
+  &m_oBackingStream->write(reinterpret_cast<const char *>(cpbBuffer), cbBuffer);
   return cbBuffer;
 }
 
@@ -214,7 +225,6 @@ uint64_t StdStreamAdapter::Position() {
 
 uint64_t StdStreamAdapter::Size() {
   int ret = 0;
-
   lock_guard<mutex> locker(*m_locker);
 
   if (m_iBackingStream.get() != nullptr) {
@@ -223,16 +233,16 @@ uint64_t StdStreamAdapter::Size() {
     m_iBackingStream->seekg(0, ios_base::end);
     ret =  static_cast<int>(m_iBackingStream->tellg());
     m_iBackingStream->seekg(oldPos);
+    m_iBackingStream->clear();
   }
 
   if (m_oBackingStream.get() != nullptr) {
+    m_oBackingStream->clear();
     auto oldPos =  m_oBackingStream->tellp();
     m_oBackingStream->seekp(0, ios_base::end);
     ret =  static_cast<int>(m_oBackingStream->tellp());
     m_oBackingStream->seekp(oldPos);
-    if(ret == -1){
-        ret = 0;
-    }
+    m_oBackingStream->clear();
   }
   return static_cast<uint64_t>(ret);
 }

@@ -50,8 +50,7 @@ HEADERS += \
     ICryptoKey.h \
     CryptoAPIExport.h \
     RMSCryptoExceptions.h \
-    IRMSCryptoEnvironment.h \
-    QTStreamImpl.h
+    IRMSCryptoEnvironment.h
 
 SOURCES += \
     BlockBasedProtectedStream.cpp \
@@ -59,5 +58,4 @@ SOURCES += \
     SimpleProtectedStream.cpp \
     CryptoAPI.cpp \
     StdStreamAdapter.cpp \
-    IRMSCryptoEnvironment.cpp \
-    QTStreamImpl.cpp
+    IRMSCryptoEnvironment.cpp
