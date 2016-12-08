@@ -1,141 +1,196 @@
+/*
+ * ======================================================================
+ * Copyright (c) Microsoft Open Technologies, Inc.  All rights reserved.
+ * Licensed under the MIT License.
+ * See LICENSE.md in the project root for license information.
+ * ======================================================================
+ */
+
 #include "StorageAccessWindows.h"
 #include <strsafe.h>
-#include "../../CryptoAPI/RMSCryptoExceptions.h"
+#include <CryptoAPI/RMSCryptoExceptions.h>
+#include <Platform/Logger/Logger.h>
 
 using namespace rmscrypto::exceptions;
+using namespace rmscrypto::platform::logger;
+using namespace std;
 
-// Global static pointer used to ensure a single instance of the class.
-StorageAccessWindows* StorageAccessWindows::mInstance = NULL;
+static const string TableName = "MSIPCKeyStorage";
+static const string KeyWrapperColumn = "csKeyWrapper";
+static const string KeyColumn = "csKey";
 
-/** This function is called to create an instance of the class.
-    Calling the constructor publicly is not allowed. The constructor
-    is private and is only called by this Instance function.
-*/
+/**
+ * Helper Functions
+ */
 
-StorageAccessWindows* StorageAccessWindows::Instance()
+string GetLastWin32ErrorAsString()
 {
-   if (!mInstance)   // Only allow one instance of class to be generated.
-      mInstance = new StorageAccessWindows;
-
-   return mInstance;
-}
-
-LPWSTR ConcatWStrings(LPCWSTR stringA, LPCWSTR stringB)
-{
-    DWORD lengthA = wcslen(stringA);
-    DWORD lengthB = wcslen(stringB);
-    LPWSTR result = new WCHAR[lengthA + lengthB + 1];
-    StringCchCopy(result, lengthA + 1, stringA);
-    StringCchCat(result, lengthA + lengthB + 1, stringB);
-    return result;
-}
-
-//Returns the last Win32 error, in string format. Returns an empty string if there is no error.
-std::string GetLastErrorAsString()
-{
-    //Get the error message, if any.
-    DWORD errorMessageID = ::GetLastError();
+    unsigned long errorMessageID = ::GetLastError();
     if(errorMessageID == 0)
-        return std::string(); //No error message has been recorded
+        return string();
 
-    LPSTR messageBuffer = nullptr;
+    char* messageBuffer = nullptr;
     size_t size = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-                                 NULL, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, NULL);
+                                 NULL, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (char*)&messageBuffer, 0, NULL);
 
-    std::string message(messageBuffer, size);
+    string message(messageBuffer, size);
 
-    //Free the buffer.
     LocalFree(messageBuffer);
 
     return message;
 }
 
-StorageAccessWindows::StorageAccessWindows()
-{
-    LPCWSTR directory = CreateLocalStorage();
-    LPCWSTR dbName = ConcatWStrings(directory, L"\\MSIPCKeyStorage.db");
+/**
+ * StorageAccessWindows implementation.
+ * TODO: Update this lazy singleton implementation with magic static of C++11 supported by MSVC 2015, as part of
+ * moving to MSVC 2015.
+ */
+atomic<StorageAccessWindows* > StorageAccessWindows::mInstance = nullptr;
+mutex StorageAccessWindows::mutex_;
 
-    char * error;
-    int rc = sqlite3_open16(dbName, &mDb);
-    const char *sqlCreateTable = "CREATE TABLE IF NOT EXISTS MSIPCKeyStorage (csKeyWrapper STRING PRIMARY KEY, csKey STRING);";
-    rc = sqlite3_exec(mDb, sqlCreateTable, NULL, NULL, &error);
-    if (rc)
+/**
+ * This function is called to get the singleton instance of the class.
+ * It uses the Double-checked locking method for thread-safety. Though
+ * C++11 provides Magic Statics, that feature is not supported by
+ * the MSVC 2013 compiler.
+ */
+StorageAccessWindows* StorageAccessWindows::Instance()
+{
+    if (mInstance.load() == nullptr)
     {
-        // error can be used for telemetry
-        sqlite3_free(error);
-        throw RMSCryptoIOKeyException(sqlite3_errmsg(mDb));
+        lock_guard<mutex> lock(mutex_);
+        if (mInstance.load() == nullptr)
+        {
+            mInstance = new StorageAccessWindows();
+        }
     }
+    return mInstance.load();
 }
 
-LPWSTR StorageAccessWindows::CreateLocalStorage()
+StorageAccessWindows::StorageAccessWindows()
 {
-    //Fetch environment variable %localappdata%
-    //Check if db folder exists
-    //If not, create and encrypt
+    const wstring directory = CreateLocalStorage();
+    const wstring dbName = directory + L"\\DefaultMSIPCKeyStorage.db";
 
-    LPCWSTR lpName = L"localappdata";
-    LPCWSTR aipDir = L"\\Microsoft\\AIP";
-    DWORD nSize = 500;
-    LPWSTR lpBuffer = new WCHAR[nSize];
-    GetEnvironmentVariableW(lpName, lpBuffer, nSize);
-    LPWSTR directory = ConcatWStrings(lpBuffer, aipDir);
-    if (!CreateDirectory(directory, NULL))
+    sqlite3* mDbTemp;
+    int rc = sqlite3_open16(dbName.c_str(), &mDbTemp);
+    mDb.reset(mDbTemp);
+    ErrorHandler(rc);
+
+    string sqlCreateTable = CreateTableQuery(TableName);
+    rc = sqlite3_exec(mDb.get(), sqlCreateTable.c_str(), NULL, NULL, NULL);
+    ErrorHandler(rc);
+}
+
+wstring StorageAccessWindows::CreateLocalStorage()
+{
+    /**
+     * Fetch environment variable %localappdata%.
+     * Check if db folder exists.
+     * If not, create and encrypt.
+     */
+
+    const wstring lpName (L"localappdata");
+    const wstring aipDir (L"\\Microsoft\\RMSLocalStorage");
+    unsigned long bufferSize = GetEnvironmentVariableW(lpName.c_str(), NULL, 0);
+    if (bufferSize == 0)
     {
-        DWORD lastError = GetLastError();
+        throw RMSCryptoIOKeyException(GetLastWin32ErrorAsString().c_str());
+    }
+
+    wstring lpBuffer (bufferSize, L'\0');
+    if (!GetEnvironmentVariableW(lpName.c_str(), &lpBuffer[0], lpBuffer.length()))
+    {
+        throw RMSCryptoIOKeyException(GetLastWin32ErrorAsString().c_str());
+    }
+    /**
+     * Resizing the buffer to exclude the terminating null character.
+     * Read https://msdn.microsoft.com/en-us/magazine/mt238407.aspx for
+     * best practices of using STL strings at Win32 API boundaries.
+     */
+    lpBuffer.resize(bufferSize-1);
+
+    wstring directory = lpBuffer + aipDir;
+    if (!CreateDirectory(directory.c_str(), NULL))
+    {
+        unsigned long lastError = GetLastError();
+        /**
+         * Other than the first time this code runs, the directory creation will always return
+         * ERROR_ALREADY_EXISTS and hence that is not a fatal error.
+         */
         if (lastError != ERROR_ALREADY_EXISTS)
         {
-            throw RMSCryptoIOKeyException(GetLastErrorAsString().c_str());
+            throw RMSCryptoIOKeyException(GetLastWin32ErrorAsString().c_str());
         }
     }
     else
     {
-        if (!EncryptFile(directory))
+        if (!EncryptFile(directory.c_str()))
         {
-            throw RMSCryptoIOKeyException(GetLastErrorAsString().c_str());
+            Logger::Warning("EncryptFile failed with " + GetLastWin32ErrorAsString());
         }
     }
     return directory;
 }
 
-void StorageAccessWindows::StoreKey(const std::string& csKeyWrapper,
-                                    const std::string& csKey)
+void StorageAccessWindows::StoreKey(const string& csKeyWrapper,const string& csKey)
 {
-    char * error;
-    std::string sqlInsert = "INSERT INTO MSIPCKeyStorage VALUES('"+csKeyWrapper +"','"+csKey+"');";
-    int rc = sqlite3_exec(mDb, sqlInsert.c_str(), NULL, NULL, &error);
-    if (rc)
-    {
-        // error can be used for telemetry
-        sqlite3_free(error);
-        throw RMSCryptoIOKeyException(sqlite3_errmsg(mDb));
-    }
+    string sqlInsert = StoreQuery(csKeyWrapper, csKey, TableName);
+    int rc = sqlite3_exec(mDb.get(), sqlInsert.c_str(), NULL, NULL, NULL);
+    ErrorHandler(rc);
 }
 
-std::shared_ptr<std::string> StorageAccessWindows::LookupKey(const std::string& csKeyWrapper)
+shared_ptr<string> StorageAccessWindows::LookupKey(const string& csKeyWrapper)
 {
-    char * error;
-    std::string sqlLookup = "SELECT csKey FROM MSIPCKeyStorage WHERE csKeyWrapper ='" + csKeyWrapper + "';";
-    char **results = NULL;
+    string sqlLookup = LookupQuery(csKeyWrapper, TableName);
+    char** results = NULL;
     int rows, columns;
-    int rc = sqlite3_get_table(mDb, sqlLookup.c_str(), &results, &rows, &columns, &error);
-    if (rc)
+    int rc = sqlite3_get_table(mDb.get(), sqlLookup.c_str(), &results, &rows, &columns, NULL);
+    ErrorHandler(rc);
+    shared_ptr<string> result;
+    if (rows >= 1 && columns >= 1)
     {
-        // error can be used for telemetry
-        sqlite3_free(error);
-        throw RMSCryptoIOKeyException(sqlite3_errmsg(mDb));
+        result.reset(new string(results[1]));
+        sqlite3_free_table(results);
     }
-    return rows >=1 && columns >= 1 ? std::shared_ptr<std::string>(new std::string(results[1])) : nullptr;
+    return result;
 }
 
-void StorageAccessWindows::RemoveKey(const std::string& csKeyWrapper)
+void StorageAccessWindows::RemoveKey(const string& csKeyWrapper)
 {
-    char * error;
-    std::string sqlDelete = "DELETE FROM MSIPCKeyStorage WHERE csKeyWrapper = '" + csKeyWrapper +"';";
-    int rc = sqlite3_exec(mDb, sqlDelete.c_str(), NULL, NULL, &error);
-    if (rc)
+    string sqlDelete = RemoveQuery(csKeyWrapper, TableName);
+    int rc = sqlite3_exec(mDb.get(), sqlDelete.c_str(), NULL, NULL, NULL);
+    ErrorHandler(rc);
+}
+
+string StorageAccessWindows::CreateTableQuery(const string& TableName)
+{
+    return "CREATE TABLE IF NOT EXISTS " + TableName + " (" + KeyWrapperColumn +
+            " STRING PRIMARY KEY, " + KeyColumn + " STRING);";
+}
+
+string StorageAccessWindows::StoreQuery(
+        const string& keyWrapper,
+        const string& key,
+        const string& TableName)
+{
+    return "INSERT INTO " + TableName + " VALUES('"+ keyWrapper +"','" + key + "');";
+}
+
+string StorageAccessWindows::LookupQuery(const string& keyWrapper, const string& TableName)
+{
+    return "SELECT " + KeyColumn + " FROM " + TableName + " WHERE " + KeyWrapperColumn + "='" + keyWrapper + "';";
+}
+
+string StorageAccessWindows::RemoveQuery(const string& keyWrapper, const string& TableName)
+{
+    return "DELETE FROM " + TableName + " WHERE " + KeyWrapperColumn + "='" + keyWrapper + "';";
+}
+
+void StorageAccessWindows::ErrorHandler(int returnCode)
+{
+    if (returnCode)
     {
-        // error can be used for telemetry
-        sqlite3_free(error);
-        throw RMSCryptoIOKeyException(sqlite3_errmsg(mDb));
+        throw RMSCryptoIOKeyException(sqlite3_errmsg(mDb.get()));
     }
 }

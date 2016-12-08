@@ -9,7 +9,7 @@ CONFIG   += staticlib warn_on c++11 debug_and_release
 QT       += core
 
 unix:!mac:INCLUDEPATH  += /usr/include/glib-2.0/ /usr/include/libsecret-1/ /usr/lib/x86_64-linux-gnu/glib-2.0/include/
-# win32:INCLUDEPATH += //TODO: Add DPAPI
+win32:INCLUDEPATH += $$REPO_ROOT/sdk/rmscrypto_sdk/
 # mac:INCLUDEPATH   += //TODO: Add osxkeychain
 
 LIBS +=  -L$$DESTDIR

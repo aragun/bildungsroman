@@ -7,7 +7,8 @@
  */
 
 #include "KeyStorageWindows.h"
-#include "../../CryptoAPI/RMSCryptoExceptions.h"
+#include "StorageAccessWindows.h"
+#include "CryptoAPI/RMSCryptoExceptions.h"
 
 using namespace std;
 namespace rmscrypto {

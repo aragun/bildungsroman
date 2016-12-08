@@ -75,7 +75,7 @@ void KeyStoragePosix::StoreKey(const string& csKeyWrapper, const string& csKey) 
   }
 }
 
-shared_ptr<string>KeyStoragePosix::LookupKey(const string& csKeyWrapper) {
+shared_ptr<string> KeyStoragePosix::LookupKey(const string& csKeyWrapper) {
   GError *error = NULL;
 
   shared_ptr<string> res = nullptr;
@@ -94,7 +94,7 @@ shared_ptr<string>KeyStoragePosix::LookupKey(const string& csKeyWrapper) {
   return res;
 }
 
-std::shared_ptr<IKeyStorage>IKeyStorage::Create() {
+std::shared_ptr<IKeyStorage> IKeyStorage::Create() {
   return std::shared_ptr<KeyStoragePosix>(new KeyStoragePosix());
 }
 } // namespace keystorage

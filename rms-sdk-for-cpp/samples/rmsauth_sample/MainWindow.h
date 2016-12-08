@@ -55,11 +55,12 @@ private:
 
 
   void AddLog(const std::string& tag,
-              const char        *message,
-              const uint        browserChoice);
+              const char* message,
+              const uint browserChoice);
+
   void AddLog(const QString& tag,
               const QString& message,
-              const uint    browserChoice);
+              const uint browserChoice);
 
   Ui::MainWindow *ui;
 };

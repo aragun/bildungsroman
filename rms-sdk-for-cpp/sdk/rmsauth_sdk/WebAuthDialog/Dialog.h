@@ -1,6 +1,15 @@
-#ifndef DIALOG_H
-#define DIALOG_H
+/*
+ * ======================================================================
+ * Copyright (c) Microsoft Open Technologies, Inc.  All rights reserved.
+ * Licensed under the MIT License.
+ * See LICENSE.md in the project root for license information.
+ * ======================================================================
+ */
 
+#ifndef WEBAUTHDIALOG_DIALOG_H
+#define WEBAUTHDIALOG_DIALOG_H
+
+#include <memory>
 #include <QDialog>
 #include <QUrl>
 
@@ -19,22 +28,34 @@ class MYSHAREDLIB_EXPORT Dialog : public QDialog
     Q_OBJECT
 
 public:
+    const QString& requestUrl() const {return mRequestUrl;}
+    const QString& redirectUrl() const {return mRedirectUrl;}
     const QString& respondUrl() const {return mRespondUrl;}
 
-    explicit Dialog(const QString& requestUrl, const QString& redirectUrl, bool useCookie = false, QWidget *parent = 0);
+    explicit Dialog(
+            const QString& requestUrl,
+            const QString& redirectUrl,
+            bool useCookie = false,
+            QWidget* parent = 0);
+
     ~Dialog();
+
+protected:
+    void showEvent(QShowEvent* event) override;
+
+private:
+    /**
+     * mRequestUrl: represents the Url requested for this Dialog
+     * mRedirectUrl: represents the Redirect Url passed to the Dialog
+     * mRespondUrl: used to capture the token returned from the ADAL auth flow
+     */
     QString mRequestUrl;
     QString mRedirectUrl;
     QString mRespondUrl;
+    std::unique_ptr<Ui::Dialog> mUi;
 
-private:
-    Ui::Dialog * mUi;
-
-public slots:
+private slots:
     void processAuthReply(QUrl);
-
-protected:
-    void showEvent(QShowEvent * event) override;
 
 };
 

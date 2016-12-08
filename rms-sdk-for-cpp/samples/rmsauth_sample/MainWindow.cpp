@@ -150,14 +150,14 @@ void MainWindow::GetTokenUsingUserPassword(const std::string& authority,
 }
 
 void MainWindow::AddLog(const std::string& tag,
-                        const char        *message,
-                        const uint         browserChoice) {
+                        const char* message,
+                        const uint browserChoice) {
   AddLog(QString::fromStdString(tag), QString::fromLatin1(message), browserChoice);
 }
 
 void MainWindow::AddLog(const QString& tag,
                         const QString& message,
-                        const uint     browserChoice) {
+                        const uint browserChoice) {
     switch(browserChoice)
     {
     case AUTHORIZATION_CODE:
