@@ -125,7 +125,9 @@ int64_t StdStreamAdapter::Read(uint8_t *pbBuffer,
 int64_t StdStreamAdapter::ReadInternal(uint8_t *pbBuffer,
                                        int64_t  cbBuffer) {
     auto fail = m_iBackingStream->fail();
-    //This fail only happens in Windows
+    // Windows implementation of StringStream has a bug
+    // that for an empty stream fail bit is set after calling seekg(0).
+    // Workaround the bug by calling clear() which clears the failures.
     if(fail){
         m_iBackingStream->clear();
     }
@@ -158,7 +160,9 @@ int64_t StdStreamAdapter::WriteInternal(const uint8_t *cpbBuffer,
   assert(cpbBuffer != nullptr || cbBuffer == 0);
 
   auto fail = m_oBackingStream->fail();
-  //This fail only happens in Windows
+  // Windows implementation of StringStream has a bug
+  // that for an empty stream fail bit is set after calling seekg(0).
+  // Workaround the bug by calling clear() which clears the failures.
   if(fail){
       m_oBackingStream->clear();
   }
