@@ -59,4 +59,4 @@ private slots:
 
 };
 
-#endif // DIALOG_H
+#endif // WEBAUTHDIALOG_DIALOG_H
