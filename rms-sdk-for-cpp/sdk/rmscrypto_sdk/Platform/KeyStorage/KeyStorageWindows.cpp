@@ -15,16 +15,16 @@ namespace rmscrypto {
 namespace platform {
 namespace keystorage {
 void KeyStorageWindows::RemoveKey(const string& csKeyWrapper) {
-    StorageAccessWindows::Instance()->RemoveKey(csKeyWrapper);
+    StorageAccessWindows::Instance().RemoveKey(csKeyWrapper);
 }
 
 void KeyStorageWindows::StoreKey(const string& csKeyWrapper,
                                  const string& csKey) {
-    StorageAccessWindows::Instance()->StoreKey(csKeyWrapper, csKey);
+    StorageAccessWindows::Instance().StoreKey(csKeyWrapper, csKey);
 }
 
 shared_ptr<string>KeyStorageWindows::LookupKey(const string& csKeyWrapper) {
-    return StorageAccessWindows::Instance()->LookupKey(csKeyWrapper);
+    return StorageAccessWindows::Instance().LookupKey(csKeyWrapper);
 }
 
 std::shared_ptr<IKeyStorage>IKeyStorage::Create() {

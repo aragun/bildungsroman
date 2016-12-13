@@ -18,12 +18,20 @@
 class StorageAccessWindows {
 
 public:
-   static StorageAccessWindows* Instance();
+   static StorageAccessWindows& Instance();
    void StoreKey(const std::string& keyWrapper, const std::string& key);
    std::shared_ptr<std::string> LookupKey(const std::string& keyWrapper);
    void RemoveKey(const std::string& keyWrapper);
 
 private:
+   enum class OpType
+   {
+       kCreateTable,
+       kStore,
+       kLookup,
+       kRemove,
+   };
+
    StorageAccessWindows();
    // Disallow copy and assignment
    StorageAccessWindows(StorageAccessWindows const&){}
@@ -33,10 +41,8 @@ private:
    std::string StoreQuery(const std::string& keyWrapper, const std::string& key, const std::string& TableName);
    std::string LookupQuery(const std::string& keyWrapper, const std::string& TableName);
    std::string RemoveQuery(const std::string& keyWrapper, const std::string& TableName);
-   void ErrorHandler(int returnCode);
+   void ErrorHandler(int returnCode, StorageAccessWindows::OpType operation);
 
-   static std::atomic<StorageAccessWindows* > mInstance;
-   static std::mutex mutex_;
    std::shared_ptr<sqlite3> mDb;
 };
 

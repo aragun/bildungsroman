@@ -41,30 +41,14 @@ string GetLastWin32ErrorAsString()
 }
 
 /**
- * StorageAccessWindows implementation.
- * TODO: Update this lazy singleton implementation with magic static of C++11 supported by MSVC 2015, as part of
- * moving to MSVC 2015.
+ * StorageAccessWindows Singleton implementation.
+ * If the class has already been created, the static variable will not be created again.
+ * Starting MSVC 2015 (which supports Magic Statics), this implementation is also thread-safe.
  */
-atomic<StorageAccessWindows* > StorageAccessWindows::mInstance = nullptr;
-mutex StorageAccessWindows::mutex_;
-
-/**
- * This function is called to get the singleton instance of the class.
- * It uses the Double-checked locking method for thread-safety. Though
- * C++11 provides Magic Statics, that feature is not supported by
- * the MSVC 2013 compiler.
- */
-StorageAccessWindows* StorageAccessWindows::Instance()
+StorageAccessWindows& StorageAccessWindows::Instance()
 {
-    if (mInstance.load() == nullptr)
-    {
-        lock_guard<mutex> lock(mutex_);
-        if (mInstance.load() == nullptr)
-        {
-            mInstance = new StorageAccessWindows();
-        }
-    }
-    return mInstance.load();
+    static StorageAccessWindows mInstance;
+    return mInstance;
 }
 
 StorageAccessWindows::StorageAccessWindows()
@@ -75,11 +59,11 @@ StorageAccessWindows::StorageAccessWindows()
     sqlite3* mDbTemp;
     int rc = sqlite3_open16(dbName.c_str(), &mDbTemp);
     mDb.reset(mDbTemp);
-    ErrorHandler(rc);
+    ErrorHandler(rc, OpType::kCreateTable);
 
     string sqlCreateTable = CreateTableQuery(TableName);
     rc = sqlite3_exec(mDb.get(), sqlCreateTable.c_str(), NULL, NULL, NULL);
-    ErrorHandler(rc);
+    ErrorHandler(rc, OpType::kCreateTable);
 }
 
 wstring StorageAccessWindows::CreateLocalStorage()
@@ -137,7 +121,7 @@ void StorageAccessWindows::StoreKey(const string& csKeyWrapper,const string& csK
 {
     string sqlInsert = StoreQuery(csKeyWrapper, csKey, TableName);
     int rc = sqlite3_exec(mDb.get(), sqlInsert.c_str(), NULL, NULL, NULL);
-    ErrorHandler(rc);
+    ErrorHandler(rc, OpType::kStore);
 }
 
 shared_ptr<string> StorageAccessWindows::LookupKey(const string& csKeyWrapper)
@@ -146,7 +130,7 @@ shared_ptr<string> StorageAccessWindows::LookupKey(const string& csKeyWrapper)
     char** results = NULL;
     int rows, columns;
     int rc = sqlite3_get_table(mDb.get(), sqlLookup.c_str(), &results, &rows, &columns, NULL);
-    ErrorHandler(rc);
+    ErrorHandler(rc, OpType::kLookup);
     shared_ptr<string> result;
     if (rows >= 1 && columns >= 1)
     {
@@ -160,7 +144,7 @@ void StorageAccessWindows::RemoveKey(const string& csKeyWrapper)
 {
     string sqlDelete = RemoveQuery(csKeyWrapper, TableName);
     int rc = sqlite3_exec(mDb.get(), sqlDelete.c_str(), NULL, NULL, NULL);
-    ErrorHandler(rc);
+    ErrorHandler(rc, OpType::kRemove);
 }
 
 string StorageAccessWindows::CreateTableQuery(const string& TableName)
@@ -174,7 +158,7 @@ string StorageAccessWindows::StoreQuery(
         const string& key,
         const string& TableName)
 {
-    return "INSERT INTO " + TableName + " VALUES('"+ keyWrapper +"','" + key + "');";
+    return "INSERT OR REPLACE INTO " + TableName + " VALUES('"+ keyWrapper +"','" + key + "');";
 }
 
 string StorageAccessWindows::LookupQuery(const string& keyWrapper, const string& TableName)
@@ -187,10 +171,34 @@ string StorageAccessWindows::RemoveQuery(const string& keyWrapper, const string&
     return "DELETE FROM " + TableName + " WHERE " + KeyWrapperColumn + "='" + keyWrapper + "';";
 }
 
-void StorageAccessWindows::ErrorHandler(int returnCode)
+void StorageAccessWindows::ErrorHandler(int returnCode, OpType op)
 {
     if (returnCode)
     {
-        throw RMSCryptoIOKeyException(sqlite3_errmsg(mDb.get()));
+        string errorOp;
+        switch(op)
+        {
+            case OpType::kCreateTable:
+                errorOp = "CreateTable";
+                break;
+
+            case OpType::kStore:
+                errorOp = "Store";
+                break;
+
+            case OpType::kLookup:
+                errorOp = "Lookup";
+                break;
+
+            case OpType::kRemove:
+                errorOp = "Remove";
+                break;
+
+            default:
+                errorOp = "Undefined";
+                break;
+        }
+        Logger::Error("StorageAccessWindows operation " + errorOp + ", Sqlite3 failure " + sqlite3_errmsg(mDb.get()));
+        throw RMSCryptoIOKeyException("StorageAccessWindows failure in operation " + errorOp);
     }
 }
