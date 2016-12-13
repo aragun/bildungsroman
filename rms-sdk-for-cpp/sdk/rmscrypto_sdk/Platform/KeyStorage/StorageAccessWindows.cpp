@@ -198,7 +198,7 @@ void StorageAccessWindows::ErrorHandler(int returnCode, OpType op)
                 errorOp = "Undefined";
                 break;
         }
-        Logger::Error("StorageAccessWindows operation " + errorOp + ", Sqlite3 failure " + sqlite3_errmsg(mDb.get()));
+        Logger::Error("StorageAccessWindows failure in " + errorOp + ", sqlite3 failure " + sqlite3_errmsg(mDb.get()));
         throw RMSCryptoIOKeyException("StorageAccessWindows failure in operation " + errorOp);
     }
 }
